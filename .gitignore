@@ -1,0 +1,42 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Test coverage
+.coverage
+htmlcov/
+
+# Local SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Frontend dependencies and build output
+node_modules/
+dist/
+coverage/
+*.log
+
+# macOS
+.DS_Store
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.swp
