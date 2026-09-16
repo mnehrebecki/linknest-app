@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: linknest-database
+  namespace: linknest-app
+spec:
+  selector:
+    matchLabels:
+      role: database
+  serviceName: "database-svc"
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        role: database
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        envFrom:
+          - configMapRef:
+              name: linknest-config
+          - secretRef:
+              name: linknest-database
+        ports:
+        - containerPort: 5432
+          name: postgres
+        startupProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+          periodSeconds: 2
+          failureThreshold: 30
+
+        readinessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        livenessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 2Gi

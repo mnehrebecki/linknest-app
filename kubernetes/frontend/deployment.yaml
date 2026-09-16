@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: linknest-frontend
+  name: linknest-frontend
+  namespace: linknest-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linknest-frontend
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: linknest-frontend
+    spec:
+      containers:
+      - image: linknest-frontend:1.0.1
+        name: linknest-frontend
+        startupProbe:
+          httpGet:
+            path: /
+            port: http
+          periodSeconds: 2
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        ports:
+          - name: http
+            containerPort: 80
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+status: {}

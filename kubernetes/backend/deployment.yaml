@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: linknest-backend
+  name: linknest-backend
+  namespace: linknest-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linknest-backend
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: linknest-backend
+    spec:
+      containers:
+      - image: linknest-backend:1.0.0
+        name: linknest-backend
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 2
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        env:
+          - name: POSTGRES_USER
+            valueFrom:
+              configMapKeyRef:
+                name: linknest-config
+                key: POSTGRES_USER
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: linknest-database
+                key: POSTGRES_PASSWORD
+          - name: POSTGRES_DB
+            valueFrom:
+              configMapKeyRef:
+                name: linknest-config
+                key: POSTGRES_DB
+          - name: POSTGRES_SERVICE
+            valueFrom: 
+              configMapKeyRef:
+                name: linknest-config
+                key: POSTGRES_SERVICE
+          - name: DATABASE_URL
+            value: "postgresql+psycopg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_SERVICE):5432/$(POSTGRES_DB)"
+        ports:
+          - containerPort: 8000
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+status: {}
