@@ -1,0 +1,110 @@
+namespace: linknest-app
+
+backend:
+  replicas: 1
+  image: linknest-backend:1.0.0
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  probes:
+    startupProbe:
+      httpGet:
+        path: /health
+        port: 8000
+      periodSeconds: 2
+      failureThreshold: 30
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8000
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8000
+      initialDelaySeconds: 5
+      periodSeconds: 5
+  service:
+    type: ClusterIP
+    port: 8000
+
+frontend:
+  replicas: 1
+  image: linknest-frontend:1.0.1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  probes:
+    startupProbe:
+      httpGet:
+        path: /
+        port: http
+      periodSeconds: 2
+      failureThreshold: 30
+    livenessProbe:
+      httpGet:
+        path: /
+        port: http
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    readinessProbe:
+      httpGet:
+        path: /
+        port: http
+      initialDelaySeconds: 5
+      periodSeconds: 5
+  service:
+    type: ClusterIP
+    port: 8080
+
+database:
+  replicas: 1
+  image: postgres:15
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  pvcStorage: 2Gi
+  storageClassName: standard
+  probes:
+    startupProbe:
+      exec:
+        command:
+          - sh
+          - -c
+          - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+      periodSeconds: 2
+      failureThreshold: 30
+    readinessProbe:
+      exec:
+        command:
+          - sh
+          - -c
+          - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+    livenessProbe:
+      exec:
+        command:
+          - sh
+          - -c
+          - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+  config:
+    postgresDb: bookmarks
+    postgresUser: admin

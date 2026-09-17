@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: linknest-backend
+  name: linknest-backend
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: linknest-backend
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: linknest-backend
+    spec:
+      containers:
+      - image: {{ .Values.backend.image }}
+        name: linknest-backend
+        {{- with .Values.backend.probes.startupProbe }}
+        startupProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.backend.probes.livenessProbe }}
+        livenessProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.backend.probes.readinessProbe }}
+        readinessProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+          - name: POSTGRES_USER
+            valueFrom:
+              configMapKeyRef:
+                name: linknest-config
+                key: POSTGRES_USER
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: linknest-database
+                key: POSTGRES_PASSWORD
+          - name: POSTGRES_DB
+            valueFrom:
+              configMapKeyRef:
+                name: linknest-config
+                key: POSTGRES_DB
+          - name: POSTGRES_SERVICE
+            valueFrom: 
+              configMapKeyRef:
+                name: linknest-config
+                key: POSTGRES_SERVICE
+          - name: DATABASE_URL
+            value: "postgresql+psycopg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_SERVICE):5432/$(POSTGRES_DB)"
+        ports:
+          - containerPort: 8000
+      {{- with .Values.backend.resources }}
+        resources:
+      {{- toYaml . | nindent 10 }}
+      {{- end }}

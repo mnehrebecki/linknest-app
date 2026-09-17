@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: linknest-frontend
+  name: linknest-frontend
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: linknest-frontend
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: linknest-frontend
+    spec:
+      containers:
+      - image: {{ .Values.frontend.image }}
+        name: linknest-frontend
+        {{- with .Values.frontend.probes.startupProbe }}
+        startupProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.frontend.probes.livenessProbe }}
+        livenessProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.frontend.probes.readinessProbe }}
+        readinessProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        ports:
+          - name: http
+            containerPort: 80
+      {{- with .Values.frontend.resources }}
+        resources:
+      {{- toYaml . | nindent 10 }}
+      {{- end }}
+
+status: {}

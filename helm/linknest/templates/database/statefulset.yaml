@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: linknest-database
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      role: database
+  serviceName: "database-svc"
+  replicas: {{ .Values.database.replicas }}
+  template:
+    metadata:
+      labels:
+        role: database
+    spec:
+      containers:
+      - name: postgres
+        image: {{ .Values.database.image }}
+        {{- with .Values.database.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        envFrom:
+          - configMapRef:
+              name: linknest-config
+          - secretRef:
+              name: linknest-database
+        ports:
+        - containerPort: 5432
+          name: postgres
+        {{- with .Values.database.probes.startupProbe }}
+        startupProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.database.probes.livenessProbe }}
+        livenessProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.database.probes.readinessProbe }}
+        readinessProbe:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.database.storageClassName | quote }}
+      resources:
+        requests:
+          storage: {{ .Values.database.pvcStorage }}
